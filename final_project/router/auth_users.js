@@ -7,6 +7,7 @@ let users = [];
 
 function loadBooks(books) {
   return new Promise((resolve, reject) => {
+    //checking for books availability
     if (Object.keys(books).length > 0) {
       resolve(books);
     } else reject({ message: "No books available" });
@@ -54,6 +55,10 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
 
   loadBooks(books[isbn])
     .then((response) => {
+      //if the user forgets to enter the review
+      if (!review) {
+        return res.status(403).json({ message: "please add a review" });
+      }
       response["reviews"][username] = review;
       return res.send(response);
     })
@@ -68,10 +73,11 @@ regd_users.delete("/auth/review/:isbn", (req, res) => {
   const username = req.session.authorization["username"];
   loadBooks(books[isbn])
     .then((response) => {
+      //checking if the review for username even exists
       if (response["reviews"][username]) {
         delete response["reviews"][username];
         return res.send({
-          message: `Review deleted for username: ${username}`,
+          message: `Review deleted for username:${username}, on the book with isbn:${isbn}`,
         });
       } else {
         return res
@@ -80,7 +86,9 @@ regd_users.delete("/auth/review/:isbn", (req, res) => {
       }
     })
     .catch(() =>
-      res.status(404).json({ message: `No reviews present, as the book with isbn: ${isbn} is not available` })
+      res.status(404).json({
+        message: `No reviews present, as the book with isbn: ${isbn} is not available`,
+      })
     );
 });
 

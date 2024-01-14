@@ -5,12 +5,11 @@ let users = require("./auth_users.js").users;
 const loadBooks = require("./auth_users.js").loadBooks;
 const public_users = express.Router();
 
-
 public_users.post("/register", (req, res) => {
   const username = req.body.username;
   const password = req.body.password;
-  if(!username || !password){
-    return res.status(401).json({message: "Error Registering"})
+  if (!username || !password) {
+    return res.status(401).json({ message: "Error Registering" });
   }
   if (!isValid(username)) {
     users.push({ username: username, password: password });
@@ -47,6 +46,8 @@ public_users.get("/author/:author", function (req, res) {
       Object.values(response).map((book) => {
         if (book["author"] == author) bookList.push(book);
       });
+
+      //if found 1 or more book with the given author
       if (bookList.length > 0) {
         return res.send(bookList);
       }
@@ -69,6 +70,7 @@ public_users.get("/title/:title", function (req, res) {
         if (book["title"] == title) bookList.push(book);
       });
 
+      //if found 1 or more book with the given title
       if (bookList.length > 0) {
         return res.send(bookList);
       }
@@ -83,7 +85,14 @@ public_users.get("/title/:title", function (req, res) {
 public_users.get("/review/:isbn", function (req, res) {
   const isbn = req.params.isbn;
   loadBooks(books[isbn])
-    .then((response) => res.send(response["reviews"]))
+    .then((response) => {
+      
+      //checking if reviews are available
+      if (Object.keys(response["reviews"]).length > 0) {
+        return res.send(response["reviews"]);
+      }
+      return res.status(404).json({message: `No reviews posted for the book with isbn: ${isbn}`})
+    })
     .catch(() =>
       res.status(404).json({ message: `No Book found with isbn: ${isbn}` })
     );
